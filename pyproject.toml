@@ -1,0 +1,83 @@
+[project]
+name = "stimask"
+version = "0.1.0"
+description = "Responsive neurostimulation artifact detection using 1-D U-Net"
+requires-python = ">=3.14"
+dependencies = [
+    "matplotlib>=3.10.8",
+    "numpy>=2.4.2",
+    "pandas>=3.0.1",
+    "scipy>=1.17.1",
+    "seaborn>=0.13.2",
+]
+
+[dependency-groups]
+dev = [
+    "black>=26.1.0",
+    "ipykernel>=7.2.0",
+    "mypy>=1.15.0",
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.11.0",
+]
+
+# ---------------------------------------------------------------------------
+# Tool configuration
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = ["src", "data", "notebooks", "docs", "outputs", ".venv"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = [
+    "E501",    # line length (handled by formatter)
+    "RUF001",  # ambiguous unicode — µV, ², etc. are correct in ECoG context
+    "RUF002",  # ambiguous unicode in docstrings
+    "RUF003",  # ambiguous unicode in comments
+    "RUF005",  # collection-literal-concatenation — readability preference
+    "RUF012",  # mutable class default — dataclass pattern is fine
+    "RUF059",  # unused unpacked variable — intentional in data pipelines
+    "B905",    # zip-without-explicit-strict — not worth enforcing everywhere
+    "B007",    # unused loop control variable — common `for _ in range(n)` patterns
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use sys.path manipulation before src/ imports
+"tests/*.py" = ["E402"]
+# Existing research code — suppress until individually addressed
+"src/stim_explainability.py" = ["F841", "B023", "F821", "F401"]
+"src/stim_ablation.py" = ["F841"]
+"src/stim_detector.py" = ["F841", "F821"]
+"src/stim_metrics.py" = ["F841", "E712"]
+"src/comparison_methods.py" = ["F841"]
+"src/build_stim_catalog.py" = ["F841", "F401", "E712"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["stim_detector_lib", "utils"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_configs = true
+warn_return_any = false  # too noisy with torch/numpy return types
+
+[[tool.mypy.overrides]]
+module = [
+    "stim_detector_lib",
+    "comparison_methods",
+    "stim_explainability",
+    "stim_ablation",
+    "stim_detector",
+    "stim_inference",
+    "stim_mask_refiner",
+]
+# Strict typing for these modules will be phased in
+disable_error_code = ["attr-defined", "arg-type", "assignment", "override", "return-value", "union-attr", "call-overload"]
